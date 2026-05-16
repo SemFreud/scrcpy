@@ -31,8 +31,7 @@
         - name: Configure (cross-compile to x86_64)
           env:
             PATH: /usr/local/bin:/usr/local/sbin:/usr/bin:/bin:/usr/sbin:/sbin
-            PKG_CONFIG_PATH:
-  /usr/local/lib/pkgconfig:/usr/local/opt/ffmpeg/lib/pkgconfig:/usr/local/opt/sdl2/lib/pkgconfig:/usr/local/opt/libusb/lib/pkgconfig
+            PKG_CONFIG_PATH:  /usr/local/lib/pkgconfig:/usr/local/opt/ffmpeg/lib/pkgconfig:/usr/local/opt/sdl2/lib/pkgconfig:/usr/local/opt/libusb/lib/pkgconfig
           run: |
             arch -x86_64 /usr/local/bin/meson setup x \
               --buildtype=release --strip -Db_lto=true \
