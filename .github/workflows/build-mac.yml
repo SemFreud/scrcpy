@@ -3,7 +3,7 @@
   on: workflow_dispatch
   jobs:
     build:
-      runs-on: macos-13   # Intel；要 ARM 改 macos-14
+      runs-on: macos-14   # Intel；要 ARM 改 macos-14
       steps:
         - uses: actions/checkout@v4
           with:
