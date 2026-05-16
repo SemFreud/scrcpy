@@ -29,21 +29,21 @@ jobs:
           # Actions (caveats / post-install diagnostics). We tolerate that and
           # verify success via `brew list <pkg>` afterwards.
           set +e
-          for pkg in meson ninja pkgconf sdl2 ffmpeg libusb; do
+          for pkg in meson ninja pkgconf sdl2 ffmpeg@6 libusb; do
             echo "::group::brew install $pkg"
             arch -x86_64 /usr/local/bin/brew install "$pkg"
             echo "::endgroup::"
           done
           set -e
           echo "==> verifying all formulas are installed"
-          for pkg in meson ninja pkgconf sdl2 ffmpeg libusb; do
+          for pkg in meson ninja pkgconf sdl2 ffmpeg@6 libusb; do
             arch -x86_64 /usr/local/bin/brew list --formula "$pkg" >/dev/null \
               || { echo "MISSING: $pkg"; exit 1; }
             echo "  ok: $pkg"
           done
           echo "==> verifying dylibs are x86_64"
           file /usr/local/opt/sdl2/lib/libSDL2.dylib
-          file /usr/local/opt/ffmpeg/lib/libavformat.dylib
+          file /usr/local/opt/ffmpeg@6/lib/libavformat.dylib
           file /usr/local/opt/libusb/lib/libusb-1.0.dylib
 
       - name: fetch prebuilt server jar
@@ -55,7 +55,7 @@ jobs:
         env:
           PATH: /usr/local/bin:/usr/local/sbin:/usr/bin:/bin:/usr/sbin:/sbin
           PKG_CONFIG: /usr/local/bin/pkgconf
-          PKG_CONFIG_PATH: /usr/local/lib/pkgconfig:/usr/local/opt/ffmpeg/lib/pkgconfig:/usr/local/opt/sdl2/lib/pkgconfig:/usr/local/opt/libusb/lib/pkgconfig
+          PKG_CONFIG_PATH: /usr/local/lib/pkgconfig:/usr/local/opt/ffmpeg@6/lib/pkgconfig:/usr/local/opt/sdl2/lib/pkgconfig:/usr/local/opt/libusb/lib/pkgconfig
         run: |
           arch -x86_64 /usr/local/bin/meson setup x \
             --buildtype=release --strip -Db_lto=true \
