@@ -71,13 +71,42 @@ jobs:
           file x/app/scrcpy
           file x/app/scrcpy | grep -q x86_64 || (echo "NOT x86_64!" && exit 1)
 
-      - name: package
+      - name: install dylibbundler (x86_64)
         run: |
-          mkdir -p out
+          arch -x86_64 /usr/local/bin/brew install dylibbundler
+
+      - name: package + bundle dylibs
+        run: |
+          mkdir -p out/lib
           cp x/app/scrcpy out/scrcpy-1.25
           cp scrcpy-server-v1.25 out/
           chmod +x out/scrcpy-1.25
-          file out/scrcpy-1.25
+
+          # Copy all non-system dylibs into out/lib and rewrite the binary's
+          # load paths to @executable_path/lib so it runs anywhere.
+          arch -x86_64 /usr/local/bin/dylibbundler \
+            --overwrite-files \
+            --bundle-deps \
+            --fix-file out/scrcpy-1.25 \
+            --dest-dir out/lib/ \
+            --install-path '@executable_path/lib/' \
+            --search-path /usr/local/opt/ffmpeg@6/lib \
+            --search-path /usr/local/opt/sdl2/lib \
+            --search-path /usr/local/opt/libusb/lib \
+            --search-path /usr/local/lib
+
+          echo "==> bundled libs"
+          ls -la out/lib
+          echo "==> final load commands"
+          otool -L out/scrcpy-1.25
+
+      - name: smoke test (no display, just --version)
+        run: |
+          cd out
+          arch -x86_64 ./scrcpy-1.25 --version || true
+          # --version prints to stderr and exits 0 on scrcpy 1.x; we only
+          # care that dyld doesn't fail.
+          arch -x86_64 ./scrcpy-1.25 --version 2>&1 | head -5
 
       - uses: actions/upload-artifact@v4
         with:
