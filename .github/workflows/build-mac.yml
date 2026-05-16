@@ -1,34 +1,59 @@
 
-  name: build scrcpy 1.25 mac
-  on: workflow_dispatch
+  name: build-mac-1.25
+
+  on:
+    workflow_dispatch:
+
   jobs:
     build:
-      runs-on: macos-14   # Intel；要 ARM 改 macos-14
+      runs-on: macos-14
       steps:
         - uses: actions/checkout@v4
           with:
-            repository: Genymobile/scrcpy
             ref: v1.25
 
-        - name: install deps
-          run: brew install meson ninja sdl2 ffmpeg@4 libusb pkg-config
+        - name: Install x86_64 Homebrew
+          run: |
+            arch -x86_64 /bin/bash -c \
+              "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+            /usr/local/bin/brew --version
 
-        - name: fetch prebuilt server jar
+        - name: Install x86_64 deps via Rosetta brew
+          run: |
+            arch -x86_64 /usr/local/bin/brew install \
+              meson ninja sdl2 ffmpeg libusb pkg-config
+
+        - name: Fetch prebuilt scrcpy-server jar
           run: |
             curl -fL -o scrcpy-server-v1.25 \
               https://github.com/Genymobile/scrcpy/releases/download/v1.25/scrcpy-server-v1.25
 
-        - name: configure
+        - name: Configure (cross-compile to x86_64)
+          env:
+            PATH: /usr/local/bin:/usr/local/sbin:/usr/bin:/bin:/usr/sbin:/sbin
+            PKG_CONFIG_PATH:
+  /usr/local/lib/pkgconfig:/usr/local/opt/ffmpeg/lib/pkgconfig:/usr/local/opt/sdl2/lib/pkgconfig:/usr/local/opt/libusb/lib/pkgconfig
           run: |
-            meson setup x --buildtype=release --strip -Db_lto=true \
-              -Dprebuilt_server=$PWD/scrcpy-server-v1.25
+            arch -x86_64 /usr/local/bin/meson setup x \
+              --buildtype=release --strip -Db_lto=true \
+              -Dprebuilt_server="$PWD/scrcpy-server-v1.25"
 
-        - name: build
-          run: ninja -Cx
+        - name: Build
+          run: arch -x86_64 /usr/local/bin/ninja -Cx
+
+        - name: Verify it's actually x86_64
+          run: |
+            file x/app/scrcpy
+            file x/app/scrcpy | grep -q x86_64 || (echo "NOT x86_64!" && exit 1)
+
+        - name: Package
+          run: |
+            mkdir -p out
+            cp x/app/scrcpy out/scrcpy-1.25
+            cp scrcpy-server-v1.25 out/
+            chmod +x out/scrcpy-1.25
 
         - uses: actions/upload-artifact@v4
           with:
-            name: scrcpy-1.25-mac
-            path: |
-              x/app/scrcpy
-              scrcpy-server-v1.25
+            name: scrcpy-1.25-macos-x86_64
+            path: out/
