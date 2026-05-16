@@ -25,14 +25,23 @@ jobs:
 
       - name: install x86_64 deps via Rosetta brew
         run: |
+          # Homebrew sometimes exits non-zero after a successful install on GitHub
+          # Actions (caveats / post-install diagnostics). We tolerate that and
+          # verify success via `brew list <pkg>` afterwards.
+          set +e
+          for pkg in meson ninja pkgconf sdl2 ffmpeg libusb; do
+            echo "::group::brew install $pkg"
+            arch -x86_64 /usr/local/bin/brew install "$pkg"
+            echo "::endgroup::"
+          done
           set -e
-          arch -x86_64 /usr/local/bin/brew install meson
-          arch -x86_64 /usr/local/bin/brew install ninja
-          arch -x86_64 /usr/local/bin/brew install pkgconf
-          arch -x86_64 /usr/local/bin/brew install sdl2
-          arch -x86_64 /usr/local/bin/brew install ffmpeg
-          arch -x86_64 /usr/local/bin/brew install libusb
-          # sanity-check: dynamic libs must be x86_64
+          echo "==> verifying all formulas are installed"
+          for pkg in meson ninja pkgconf sdl2 ffmpeg libusb; do
+            arch -x86_64 /usr/local/bin/brew list --formula "$pkg" >/dev/null \
+              || { echo "MISSING: $pkg"; exit 1; }
+            echo "  ok: $pkg"
+          done
+          echo "==> verifying dylibs are x86_64"
           file /usr/local/opt/sdl2/lib/libSDL2.dylib
           file /usr/local/opt/ffmpeg/lib/libavformat.dylib
           file /usr/local/opt/libusb/lib/libusb-1.0.dylib
