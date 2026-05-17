@@ -66,6 +66,7 @@ jobs:
         run: |
           arch -x86_64 /usr/local/bin/meson setup x \
             --buildtype=release --strip -Db_lto=true \
+            -Dc_args=-D_DARWIN_C_SOURCE \
             -Dprebuilt_server="$PWD/scrcpy-server-v${SCRCPY_VER}"
 
       - name: build
