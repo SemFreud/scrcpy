@@ -1,9 +1,9 @@
-name: build scrcpy 1.17 mac (x86_64 via Rosetta)
+name: build scrcpy 1.16 mac (x86_64 via Rosetta)
 on: workflow_dispatch
 
 env:
-  SCRCPY_REF: v1.17
-  SCRCPY_VER: "1.17"
+  SCRCPY_REF: v1.16
+  SCRCPY_VER: "1.16"
 
 jobs:
   build:
